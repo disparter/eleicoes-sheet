@@ -155,45 +155,43 @@ try:
     ano = [x.get_attribute('value') for x in select_anos.find_elements(By.TAG_NAME, "option")]
     select_turnos = selects[3]
     turnos = [x.get_attribute('value') for x in select_turnos.find_elements(By.TAG_NAME, "option")]
-
+    Select(select_turnos).select_by_value(turnos[1])
+    sleep(1)
     resultados = []
-    for cargo in cargos:
-        select_ambitos = selects[1]
-        ambitos = [x.get_attribute('value') for x in select_ambitos.find_elements(By.TAG_NAME, "option")][1:]
-        for ambito in ambitos:
-            try:
-                Select(select_ambitos).select_by_value(ambito)
-                sleep(1)
-            except Exception as e:
-                print(f"Falhou ao buscar novos registros de ambitos para {ambito} e {cargo}")
-                break
+    cargo = os.getenv('CARGO')
+    Select(select_cargos).select_by_value(cargo)
+    sleep(1)
+    select_ambitos = selects[1]
+    ambitos = [x.get_attribute('value') for x in select_ambitos.find_elements(By.TAG_NAME, "option")][1:]
+    for ambito in ambitos:
+        try:
+            Select(select_ambitos).select_by_value(ambito)
+            sleep(1)
+        except Exception as e:
+            print(f"Falhou ao buscar novos registros de ambitos para {ambito} e {cargo}")
+            break
 
-            try:
-                select_institutos = driver.find_elements(By.TAG_NAME, "select")[7]
-                sleep(1)
-                institutos_pesquisa = [x.get_attribute('value') for x in
-                                       select_institutos.find_elements(By.TAG_NAME, "option")][1:]
-                for instituto in institutos_pesquisa:
-                    try:
-                        Select(select_institutos).select_by_value(instituto)
-                        sleep(1)
-                        print(f"Buscando registro para {instituto} e {cargo} no {ambito}")
-                        criar_registro_pesquisa(instituto, obter_margem_erro())
-                        print(f"Obtido registro para {instituto} e {cargo} no {ambito}")
-                    except Exception as e:
-                        print(f"Falhou em criar registro para {instituto} e {cargo} no {ambito}")
-            except Exception as e:
-                print(f"Falhou ao buscar novos registros de institutos para {ambito} e {cargo}")
-                break
-
-        selects = driver.find_elements(By.TAG_NAME, "select")
-        select_cargos = selects[0]
-        cargos = [x.get_attribute('value') for x in select_cargos.find_elements(By.TAG_NAME, "option")]
-        print(f"Terminou de obter dados para {cargo}")
+        try:
+            select_institutos = driver.find_elements(By.TAG_NAME, "select")[7]
+            sleep(1)
+            institutos_pesquisa = [x.get_attribute('value') for x in
+                                   select_institutos.find_elements(By.TAG_NAME, "option")][1:]
+            for instituto in institutos_pesquisa:
+                try:
+                    Select(select_institutos).select_by_value(instituto)
+                    sleep(1)
+                    print(f"Buscando registro para {instituto} e {cargo} no {ambito}")
+                    criar_registro_pesquisa(instituto, obter_margem_erro())
+                    print(f"Obtido registro para {instituto} e {cargo} no {ambito}")
+                except Exception as e:
+                    print(f"Falhou em criar registro para {instituto} e {cargo} no {ambito}")
+        except Exception as e:
+            print(f"Falhou ao buscar novos registros de institutos para {ambito} e {cargo}")
+            break
 
     resultados_compilados = PesquisaEleitoralCandidato.schema().dumps(resultados, many=True)
-    with open(f'data.json', 'w') as f:
+    with open(f'senador.json', 'w') as f:
         f.write(resultados_compilados)
-        print(f'data.json foi criado')
+        print(f'senador.json foi criado')
 finally:
     driver.quit()

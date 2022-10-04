@@ -9,7 +9,7 @@
 
 </head>
 <body>
-    <table id="resultado">
+    <table id="resultado_presidente">
         <thead>
             <tr>
                 <th>candidato_nome</th>
@@ -20,7 +20,38 @@
                 <th>diferenca</th>
                 <th>acertou_margem</th>
                 <th>ambito</th>
-                <th>partido</th>
+                <th>data_publicacao</th>
+                <th>instituto_nome</th>
+            </tr>
+        </thead>
+    </table>
+    <table id="resultado_governador">
+        <thead>
+            <tr>
+                <th>candidato_nome</th>
+                <th>cargo</th>
+                <th>valor_referencia</th>
+                <th>resultado_tse</th>
+                <th>margem_erro</th>
+                <th>diferenca</th>
+                <th>acertou_margem</th>
+                <th>ambito</th>
+                <th>data_publicacao</th>
+                <th>instituto_nome</th>
+            </tr>
+        </thead>
+    </table>
+    <table id="resultado_senador">
+        <thead>
+            <tr>
+                <th>candidato_nome</th>
+                <th>cargo</th>
+                <th>valor_referencia</th>
+                <th>resultado_tse</th>
+                <th>margem_erro</th>
+                <th>diferenca</th>
+                <th>acertou_margem</th>
+                <th>ambito</th>
                 <th>data_publicacao</th>
                 <th>instituto_nome</th>
             </tr>
@@ -28,30 +59,38 @@
     </table>
     <script type="text/javascript">
         $(document).ready(function(){
-            $('#resultado').DataTable({
-                ajax: {
-                    url: 'data.json',
-                    dataSrc: ''
-                },
-                columns: [
-                    { data: 'candidato_nome' },
-                    { data: 'cargo' },
-                    { data: 'valor_referencia' },
-                    { data: 'resultado_tse' },
-                    { data: 'margem_erro' },
-                    { data: 'diferenca' },
-                    { data: 'acertou_margem' },
-                    { data: 'ambito' },
-                    { data: 'partido' },
-                    { data: 'data_publicacao' },
-                    { data: 'instituto_nome' },
-                ],
-                createdRow: function( row, data, dataIndex){
-                    if(data.acertou_margem){
-                        $(row).addClass('green');
-                    }
-                },
-            });
+            const cargos = ['presidente', 'governador', 'senador'];
+            var acertos = 0;
+            var totais = 0;
+            for (cargo of cargos){
+                $('#resultado_'+cargo).DataTable({
+                    ajax: {
+                        url: cargo+'.json',
+                        dataSrc: ''
+                    },
+                    columns: [
+                        { data: 'candidato_nome' },
+                        { data: 'cargo' },
+                        { data: 'valor_referencia' },
+                        { data: 'resultado_tse' },
+                        { data: 'margem_erro' },
+                        { data: 'diferenca' },
+                        { data: 'acertou_margem' },
+                        { data: 'ambito' },
+                        { data: 'data_publicacao' },
+                        { data: 'instituto_nome' },
+                    ],
+                    createdRow: function( row, data, dataIndex){
+                        if(data.acertou_margem){
+                            $(row).addClass('green');
+                            acertos++;
+                        }
+                        totais++;
+                    },
+                });
+            }
+            console.log(acertos);
+            console.log(totais);
         });
     </script>
 </body>
