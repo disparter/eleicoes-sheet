@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import re
+import unidecode
 from dataclasses import dataclass
 
 from dataclasses_json import dataclass_json
@@ -54,29 +55,23 @@ def obter_resultado_tse(nome_candidato):
         cargo_num = obter_valor_cargo()
         driver.execute_script("window.open('about:blank','secondtab');")
         driver.switch_to.window("secondtab")
-        tse_url = f'https://resultados.tse.jus.br/oficial/app/index.html#/divulga/votacao-nominal;e=546;cargo={cargo_num};uf={ambito} '
-        sleep(0.1)
+        tse_url = f'https://resultados.tse.jus.br/oficial/app/index.html#/divulga/votacao-nominal;e=546;cargo={cargo_num};uf={ambito.lower()} '
         driver.get(tse_url)
         sleep(0.5)
         lista_candidatos = driver.find_element(By.TAG_NAME, "app-lista-candidatos")
         divs = lista_candidatos.text.split("\n")
         linha_idx = -1
         for idx, linha in enumerate(divs):
-            match = False
-            for nome in nome_candidato.split(" "):
-                if nome.upper() in linha:
-                    match = True
-                else:
-                    match = False
-                    break
-            if match:
+            if nome_candidato.upper() in unidecode.unidecode(linha):
                 linha_idx = idx
                 break
-
-        return float(divs[linha_idx+4][-6:-1].replace(",","."))
+        if linha_idx > -1:
+            return float(divs[linha_idx+4][-6:-1].replace(",", "."))
+        else:
+            return .0
     except Exception as e1:
         print(e1)
-        return 0
+        return .0
     finally:
         driver.switch_to.window(root_window)
 
@@ -94,8 +89,8 @@ def obter_valor(linha):
 
 def obter_nome_candidato(linha):
     resultado = linha.split(" ")
-    if resultado and len(resultado) > 3:
-        return ' '.join(resultado[:-2])
+    if resultado:
+        return unidecode.unidecode(resultado[0])
     return ""
 
 
@@ -111,11 +106,11 @@ def verificar_posicao():
 
 
 def verificar_margem(diferenca, margem_erro):
-    return diferenca <= margem_erro
+    return diferenca <= 2*margem_erro
 
 
 def obter_margem_erro():
-    return 0
+    return 3
 
 
 def criar_registro_pesquisa(intituto, margem_erro):
@@ -147,7 +142,6 @@ driver = webdriver.Chrome(options=options, executable_path=webdriver_path)
 
 try:
     base_url = f'https://www.poder360.com.br/agregador-de-pesquisas/'
-    sleep(0.1)
     driver.get(base_url)
     sleep(0.5)
     selects = driver.find_elements(By.TAG_NAME, "select")
@@ -172,9 +166,9 @@ try:
                 sleep(0.5)
                 for instituto in institutos_pesquisa:
                     try:
-                        nome_arquivo = instituto + ambito + cargo
+                        nome_arquivo = unidecode.unidecode(instituto.strip().replace("/", "") + ambito + cargo)
                         Select(select_institutos).select_by_value(instituto)
-                        sleep(0.5)
+                        sleep(1)
                         resultados = []
                         criar_registro_pesquisa(instituto, obter_margem_erro())
                         resultados_compilados = PesquisaEleitoralCandidato.schema().dumps(resultados, many=True)
