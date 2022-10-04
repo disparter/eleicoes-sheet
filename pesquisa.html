@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checagem Pesquisas Vs Resultado 1 Turno 2012</title>
+    <script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+</head>
+<body>
+    <table id="resultado">
+        <thead>
+            <tr>
+                <th>candidato_nome</th>
+                <th>cargo</th>
+                <th>valor_referencia</th>
+                <th>resultado_tse</th>
+                <th>margem_erro</th>
+                <th>diferenca</th>
+                <th>acertou_margem</th>
+                <th>ambito</th>
+                <th>partido</th>
+                <th>data_publicacao</th>
+                <th>instituto_nome</th>
+            </tr>
+        </thead>
+    </table>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#resultado').DataTable({
+                ajax: {
+                    url: 'data.json',
+                    dataSrc: ''
+                },
+                columns: [
+                    { data: 'candidato_nome' },
+                    { data: 'cargo' },
+                    { data: 'valor_referencia' },
+                    { data: 'resultado_tse' },
+                    { data: 'margem_erro' },
+                    { data: 'diferenca' },
+                    { data: 'acertou_margem' },
+                    { data: 'ambito' },
+                    { data: 'partido' },
+                    { data: 'data_publicacao' },
+                    { data: 'instituto_nome' },
+                ],
+                createdRow: function( row, data, dataIndex){
+                    if(data.acertou_margem){
+                        $(row).addClass('green');
+                    }
+                },
+            });
+        });
+    </script>
+</body>
+</html>
