@@ -1,6 +1,6 @@
 pytest
 uuid
-selenium
-python-dotenv
+selenium~=4.5.0
+python-dotenv~=0.21.0
 dataclasses-json
-unicode
+Unidecode~=1.3.6
