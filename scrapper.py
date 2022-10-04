@@ -20,7 +20,7 @@ class PesquisaEleitoralCandidato:
     candidato_nome: str
     partido: str
     valor_referencia: float
-    data_publicacao: datetime.date
+    data_publicacao: datetime.datetime
     instituto_nome: str
     resultado_tse: float
     margem_erro: int
@@ -40,28 +40,49 @@ def obter_data(cabecalho):
     return datetime.datetime.strptime(cabecalho.split(" ")[2], "%d/%m/%Y")
 
 
-def obter_resultado_tse(nome_candidato, uf, cargo):
+def obter_valor_cargo():
+    if cargo == 'Governador':
+        return 3
+    if cargo == 'Senador':
+        return 5
+    raise NotImplementedError('opcao apenas para governador e senador por enquanto')
+
+
+def obter_resultado_tse(nome_candidato):
     root_window = driver.window_handles[0]
     try:
+        cargo_num = obter_valor_cargo()
         driver.execute_script("window.open('about:blank','secondtab');")
         driver.switch_to.window("secondtab")
-        base_url = f'https://resultados.tse.jus.br/oficial/app/index.html#/divulga/votacao-nominal;e=546;cargo={cargo};uf={uf}'
+        tse_url = f'https://resultados.tse.jus.br/oficial/app/index.html#/divulga/votacao-nominal;e=546;cargo={cargo_num};uf={ambito} '
         sleep(0.1)
-        driver.get(base_url)
+        driver.get(tse_url)
         sleep(0.5)
-        div_candidato = driver.find_element(By.XPATH, f"//*[contains(text(), '{nome_candidato}')]")
-        div_parent = div_candidato.find_element(By.XPATH, "..")
-        div_votacao = div_parent.find_elements(By.TAG_NAME, "div")[-1]
-        div_valores = div_votacao.find_element(By.TAG_NAME, "div")
-        return div_valores.text[-6:]
-    except:
+        lista_candidatos = driver.find_element(By.TAG_NAME, "app-lista-candidatos")
+        divs = lista_candidatos.text.split("\n")
+        linha_idx = -1
+        for idx, linha in enumerate(divs):
+            match = False
+            for nome in nome_candidato.split(" "):
+                if nome.upper() in linha:
+                    match = True
+                else:
+                    match = False
+                    break
+            if match:
+                linha_idx = idx
+                break
+
+        return float(divs[linha_idx+4][-6:-1].replace(",","."))
+    except Exception as e1:
+        print(e1)
         return 0
     finally:
         driver.switch_to.window(root_window)
 
 
 def calcular_diferenca(valor, valor_tse):
-    return valor-valor_tse
+    return valor - valor_tse
 
 
 def obter_valor(linha):
@@ -81,7 +102,7 @@ def obter_nome_candidato(linha):
 def obter_partido(linha):
     resultado = linha.split(" ")
     if resultado and len(resultado) > 3:
-        return resultado[len(resultado)-2]
+        return resultado[len(resultado) - 2]
     return ""
 
 
@@ -102,7 +123,6 @@ def criar_registro_pesquisa(intituto, margem_erro):
     cabecalho = tabela.find_elements(By.TAG_NAME, 'tr')[:1][0]
     data = obter_data(cabecalho.text)
     linhas = tabela.find_elements(By.TAG_NAME, 'tr')[1:-2]
-    resultados = []
     for linha in linhas:
         texto_linha = linha.text
         nome_candidato = obter_nome_candidato(texto_linha)
@@ -117,7 +137,6 @@ def criar_registro_pesquisa(intituto, margem_erro):
             acertou_margem=verificar_margem(diferenca, margem_erro)
         )
         resultados.append(resultado)
-    return resultados
 
 
 options = Options()
@@ -125,9 +144,6 @@ options.headless = True
 load_dotenv()
 webdriver_path = os.getenv('WEBDRIVER_PATH')
 driver = webdriver.Chrome(options=options, executable_path=webdriver_path)
-
-
-
 
 try:
     base_url = f'https://www.poder360.com.br/agregador-de-pesquisas/'
@@ -144,7 +160,6 @@ try:
     select_turnos = selects[3]
     turnos = [x.get_attribute('value') for x in select_turnos.find_elements(By.TAG_NAME, "option")]
 
-
     for cargo in cargos:
         Select(select_cargos).select_by_value(cargo)
         sleep(0.5)
@@ -157,10 +172,11 @@ try:
                 sleep(0.5)
                 for instituto in institutos_pesquisa:
                     try:
-                        nome_arquivo = instituto+ambito+cargo
+                        nome_arquivo = instituto + ambito + cargo
                         Select(select_institutos).select_by_value(instituto)
                         sleep(0.5)
-                        resultados = criar_registro_pesquisa(instituto, obter_margem_erro())
+                        resultados = []
+                        criar_registro_pesquisa(instituto, obter_margem_erro())
                         resultados_compilados = PesquisaEleitoralCandidato.schema().dumps(resultados, many=True)
                         with open(f'data/{nome_arquivo}.json', 'w') as f:
                             f.write(resultados_compilados)
