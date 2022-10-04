@@ -20,7 +20,7 @@ class PesquisaEleitoralCandidato:
     candidato_nome: str
     partido: str
     valor_referencia: float
-    data_publicacao: datetime.datetime
+    data_publicacao: datetime.date
     instituto_nome: str
     resultado_tse: float
     margem_erro: int
@@ -37,11 +37,27 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 def obter_data(cabecalho):
-    return datetime.datetime.now()
+    return datetime.datetime.strptime(cabecalho.split(" ")[2], "%d/%m/%Y")
 
 
-def obter_resultado_tse(nome_candidato):
-    return 0
+def obter_resultado_tse(nome_candidato, uf, cargo):
+    root_window = driver.window_handles[0]
+    try:
+        driver.execute_script("window.open('about:blank','secondtab');")
+        driver.switch_to.window("secondtab")
+        base_url = f'https://resultados.tse.jus.br/oficial/app/index.html#/divulga/votacao-nominal;e=546;cargo={cargo};uf={uf}'
+        sleep(0.1)
+        driver.get(base_url)
+        sleep(0.5)
+        div_candidato = driver.find_element(By.XPATH, f"//*[contains(text(), '{nome_candidato}')]")
+        div_parent = div_candidato.find_element(By.XPATH, "..")
+        div_votacao = div_parent.find_elements(By.TAG_NAME, "div")[-1]
+        div_valores = div_votacao.find_element(By.TAG_NAME, "div")
+        return div_valores.text[-6:]
+    except:
+        return 0
+    finally:
+        driver.switch_to.window(root_window)
 
 
 def calcular_diferenca(valor, valor_tse):
@@ -83,8 +99,8 @@ def obter_margem_erro():
 
 def criar_registro_pesquisa(intituto, margem_erro):
     tabela = driver.find_element(By.CLASS_NAME, "poll")
-    cabecalho = tabela.find_elements(By.TAG_NAME, 'tr')[:1]
-    data = obter_data(cabecalho)
+    cabecalho = tabela.find_elements(By.TAG_NAME, 'tr')[:1][0]
+    data = obter_data(cabecalho.text)
     linhas = tabela.find_elements(By.TAG_NAME, 'tr')[1:-2]
     resultados = []
     for linha in linhas:
@@ -149,7 +165,7 @@ try:
                         with open(f'data/{nome_arquivo}.json', 'w') as f:
                             f.write(resultados_compilados)
                             print(f'{nome_arquivo}.json was created')
-                    except:
-                        pass
+                    except Exception as e:
+                        print(e)
 finally:
     driver.quit()
