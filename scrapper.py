@@ -45,11 +45,16 @@ try:
     driver.get(base_url)
     sleep(0.5)
     selects = driver.find_elements(By.TAG_NAME, "select")
-    cargos = [x.get_attribute('value') for x in selects[0].find_elements(By.TAG_NAME, "option")]
-    ambitos = [x.get_attribute('value') for x in selects[1].find_elements(By.TAG_NAME, "option")]
-    ano = [x.get_attribute('value') for x in selects[2].find_elements(By.TAG_NAME, "option")]
-    turno = [x.get_attribute('value') for x in selects[3].find_elements(By.TAG_NAME, "option")]
-    instituto_pesquisa = [x.get_attribute('value') for x in selects[7].find_elements(By.TAG_NAME, "option")][:1]
+    select_cargos = selects[0]
+    cargos = [x.get_attribute('value') for x in select_cargos.find_elements(By.TAG_NAME, "option")]
+    select_ambitos = selects[1]
+    ambitos = [x.get_attribute('value') for x in select_ambitos.find_elements(By.TAG_NAME, "option")]
+    select_anos = selects[2]
+    ano = [x.get_attribute('value') for x in select_anos.find_elements(By.TAG_NAME, "option")]
+    select_turnos = selects[3]
+    turnos = [x.get_attribute('value') for x in select_turnos.find_elements(By.TAG_NAME, "option")]
+    select_institutos = selects[7]
+    instituto_pesquisa = [x.get_attribute('value') for x in select_institutos.find_elements(By.TAG_NAME, "option")][:1]
 
 finally:
     driver.quit()
