@@ -81,7 +81,7 @@ def obter_resultado_tse(nome_candidato):
 
 
 def calcular_diferenca(valor, valor_tse):
-    return valor - valor_tse
+    return abs(valor - valor_tse)
 
 
 def obter_valor(linha):
